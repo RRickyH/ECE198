@@ -1,11 +1,42 @@
 #include <iostream>
+/*
+Pin configurations:
 
+LED Sign
+PA0 - GPIO Output
+PA1 - GPIO Output
+PA4 - GPIO Output
+PA13 - GPIO Output
+
+Communication Pins
+PA15 - GPIO EXTI15  **Go to System Core -> NVIC and enable EXTI lin [10:15] interrupts
+PA14 - GPIO Output
+*/
+
+/* USER CODE BEGIN 0 */
+
+//Declaration of global variables
 int number_of_cars = 0;
 int previous_sign_percentage = 0;
 double current_distance = 0;
 _Bool car_present = 0;
 _Bool previously_car_present = 0;
 double total_capacity = 4;
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+ 
+	if(GPIO_PIN == GPIO_PIN_15){
+		
+		//Decrements the number of cars
+		number_of_cars -= 1;
+		
+		//Sends a signal to the other microcontroller confirming signal reception
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_14, GPIO_PIN_SET);
+		HAL_Delay(50);
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_14, GPIO_PIN_RESET);
+	}
+}
+
 
 void update_sign(int percentage){
 
@@ -16,19 +47,26 @@ void update_sign(int percentage){
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_13, GPIO_PIN_RESET);
 
 	//Finds the correct one and activates the pin
-			if(percentage == 25){
+	switch(percentage){
+		case 25:
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-	} else if (percentage == 50){
+		break;
+		case 50:
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
-	} else if (percentage == 75){
+		break;
+		case 75:
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-	} else if (percentage == 100){
+		break;
+		case 100:
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_13, GPIO_PIN_SET);
+		break;
+		default:
+		//error statement
 	}
 }
 
+/* USER CODE END 0 */
 
-  /* USER CODE END 2 */
 int main(){
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -58,9 +96,6 @@ int main(){
 			  previously_car_present = 1;
 		  }
 	  }
-
-	  //Check if the exit sensor detected a passing car, will run if true
-	  // Write code here
 
 	  //Calculates the percentage based on current cars and capacity
 	  double current_percentage = 100.0*number_of_cars/total_capacity;
